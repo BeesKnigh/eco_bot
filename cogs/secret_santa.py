@@ -97,6 +97,10 @@ class SecretSanta(commands.Cog):
             embed = disnake.Embed(title="Тайный Санта", description="Вы не Тайный Санта для этого пользователя или вы не участвуете в Тайном Санте.", color=0xff0000)
             await inter.send(embed=embed)
 
+    @commands.slash_command()
+    async def test_message(self, ctx):
+        await ctx.send('бублек')
+
 
 def setup(bot):
     bot.add_cog(SecretSanta(bot))

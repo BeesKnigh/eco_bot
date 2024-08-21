@@ -65,7 +65,7 @@ class Blockchain:
 class SmartContract:
     def __init__(self, blockchain):
         self.blockchain = blockchain
-        self.conn = sqlite3.connect("balances.db")
+        self.conn = sqlite3.connect("../balances.db")
         self.cursor = self.conn.cursor()
         self.initialize_database()
 
