@@ -1,6 +1,7 @@
 config.py
-test.py
 myenv
+test.py
 /.idea
 /venv
 /trash
+/trash/minimark.py
