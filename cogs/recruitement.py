@@ -60,6 +60,11 @@ class Recruitement(commands.Cog):
         self.bot = bot
         self.persistents_views_added = False
 
+
+    @commands.Cog.listener()
+    async def on_ready(self):
+        print(f'Modal "Rec" connected')
+
     @commands.slash_command()
     async def recruit(self, ctx):
         view = disnake.ui.View()

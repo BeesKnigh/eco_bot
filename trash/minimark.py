@@ -1,5 +1,39 @@
 import disnake
 from disnake.ext import commands
+import mysql.connector
+
+# Определение функции для списания средств с баланса пользователя
+def deduct_balance_from_db(user_id, cost):
+    try:
+        # Подключение к базе данных и создание курсора
+        db_connection = mysql.connector.connect(
+            host="127.0.0.1",
+            user="beesknight",
+            password="12341234",
+            database="discord_jb",
+            charset="utf8mb4"
+        )
+        cursor = db_connection.cursor()
+
+        # Получить текущий баланс пользователя
+        cursor.execute("SELECT balance FROM user WHERE iduser = %s", (user_id,))
+        current_balance = cursor.fetchone()
+
+        if current_balance is not None and current_balance[0] >= cost:
+            # Если средств достаточно, списать средства
+            new_balance = current_balance[0] - cost
+            cursor.execute("UPDATE user SET balance = %s WHERE iduser = %s", (new_balance, user_id))
+            db_connection.commit()
+            return True
+        else:
+            # Недостаточно средств на балансе
+            return False
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        return False
+    finally:
+        cursor.close()
+        db_connection.close()
 
 
 class MarketModal(disnake.ui.Modal):
@@ -23,17 +57,48 @@ class MarketModal(disnake.ui.Modal):
         super().__init__(title=title, components=components, custom_id="marketModal")
 
     async def callback(self, interaction: disnake.ModalInteraction) -> None:
+        user_id = interaction.author.id
         name = interaction.text_values["name"]
         info = interaction.text_values["info"]
-        embed = disnake.Embed(color=0x2F3136, title="Заявка отправлена!")
-        embed.description = f"{interaction.author.mention}, Благодарим вас за **заявку**! " \
-                            f"В ближайшее время мы рассмотрим вашу заявку на покупку роли и напишем вам по контактным данным."
-        embed.set_thumbnail(url=interaction.author.display_avatar.url)
+        selected_option = interaction.custom_id  # Обновлено здесь
+        cost = 0
+
+        if selected_option == "Yapup(10000)":
+            cost = 10000
+            title = "купить Япупа"
+        elif selected_option == "Mason(1000)":
+            title = "Купить Масона"
+            cost = 1000
+        elif selected_option == "Black(100)":
+            title = "Купить Чёрный ник"
+            cost = 100
+        elif selected_option == "Yellow(100)":
+            title = "Купить Жёлтый ник"
+            cost = 100
+        elif selected_option == "Green(100)":
+            title = "Купить Зелёный ник"
+            cost = 100
+
+        if cost > 0:
+            if deduct_balance_from_db(user_id, cost):
+                # Успешно списаны деньги, можно отправить сообщение об успешной заявке
+                embed = disnake.Embed(color=0x2F3136, title="Заявка отправлена!")
+                embed.description = f"{interaction.author.mention}, Благодарим вас за **заявку** на покупку {title}! " \
+                                    f"В ближайшее время мы рассмотрим вашу заявку и напишем вам по контактным данным."
+            else:
+                # Недостаточно средств на балансе
+                embed = disnake.Embed(color=0xFF0000, title="Ошибка при снятии средств")
+                embed.description = f"{interaction.author.mention}, у вас недостаточно средств на балансе для покупки {title}."
+        else:
+            # Неизвестная опция
+            embed = disnake.Embed(color=0xFF0000, title="Ошибка при снятии средств")
+            embed.description = "Неизвестная опция."
+
         await interaction.response.send_message(embed=embed, ephemeral=True)
         channel = interaction.guild.get_channel(1169006637730779207)
-        await channel.send(f"Заявка на покупку **{self.arg}** от **{name}**\n"
+        await channel.send(f"Заявка на покупку **{title}** от **{name}**\n"
                            f" {interaction.author.mention}\n"
-                           f" Также он указал информацию где с ним можно связаться: {info}")
+                           f" Также он указал информацию, где с ним можно связаться: {info}")
 
 
 class MarketSelect(disnake.ui.Select):

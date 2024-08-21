@@ -1,4 +1,6 @@
 config.py
+test.py
 myenv
-discord.db
-market.py
+/.idea
+/venv
+/trash

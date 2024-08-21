@@ -4,6 +4,8 @@ import hashlib
 import time
 import json
 import sqlite3
+import os
+
 
 class Block:
     def __init__(self, index, previous_hash, timestamp, data):
@@ -16,6 +18,7 @@ class Block:
     def calculate_hash(self):
         value = str(self.index) + str(self.previous_hash) + str(self.timestamp) + str(self.data)
         return hashlib.sha256(value.encode()).hexdigest()
+
 
 class Blockchain:
     def __init__(self):
@@ -57,6 +60,7 @@ class Blockchain:
                               data=block['data']) for block in serialized_chain]
         except FileNotFoundError:
             return [self.create_genesis_block()]
+
 
 class SmartContract:
     def __init__(self, blockchain):
@@ -125,7 +129,7 @@ class SmartContract:
 
     def get_all_transactions(self):
         self.cursor.execute("""
-            SELECT sender_id, recipient_id, amount, timestamp FROM transactions
+            SELECT sender_id, recipient_username, amount, timestamp FROM transactions
         """)
         transactions = self.cursor.fetchall()
 
@@ -186,6 +190,7 @@ class BlockchainCog(commands.Cog):
     async def register(self, ctx, username: str):
         user_id = ctx.author.id
         success = self.smart_contract.register_user(user_id, username)
+
         if success:
             await ctx.send(f"Пользователь {username} успешно создан! У вас на балансе 100 монет.")
         else:
@@ -194,6 +199,7 @@ class BlockchainCog(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         print(f'BlockchainCog is ready!')
+
 
 def setup(bot):
     bot.add_cog(BlockchainCog(bot))
